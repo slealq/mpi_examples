@@ -4,13 +4,16 @@
 # @file
 # @version 0.1
 
+CC = g++
+CFLAGS = -c -Wall
+
 all: main
 
 hello : main.o
-	g++ -o main main.o
+	$(CC) -o main main.o
 
 main.o : main.cpp
-	g++ -c main.cpp
+	$(CC) $(CFLAGS) main.cpp
 
 clean : 
 	rm *.o main
