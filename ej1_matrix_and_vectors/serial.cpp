@@ -1,15 +1,17 @@
 #include "serial.h"
 
-int *serial(int[] v, int[][] m, int *size) {
-  int r[3] = {0,0,0};
+int serial(int* v, int** m, int *r, int size) {
+  /* This function will assume that the matrix and
+     vector are the same size, and can be multiplied.
+   */
 
   // iterate over each column of the matrix
-  for (int i=0; i<3; i++) {
+  for (int i=0; i<size; i++) {
     // iterate over each pos of vector and matrix
-    for (int j=0; j<3; j++) {
+    for (int j=0; j<size; j++) {
       r[i] += v[j] * m[j][i];
     }
   }
 
-
+  return 1; // return true for success
 }
