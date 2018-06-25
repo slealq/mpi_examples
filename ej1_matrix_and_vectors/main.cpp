@@ -21,5 +21,21 @@ int main() {
     }
   }
 
+  // vector times matrix, result in r
+  int r[3] = {0,0,0};
+
+  // iterate over each column of the matrix
+  for (int i=0; i<3; i++) {
+    // iterate over each pos of vector and matrix
+    for (int j=0; j<3; j++) {
+      r[i] += v[j] * m[j][i];
+    }
+  }
+
+  // print the result
+  for (int n : r) {
+    std::cout << n << "\n";
+  }
+
 
 }
