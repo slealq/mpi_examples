@@ -9,13 +9,13 @@ CFLAGS = -c -Wall
 
 all: main
 
-main : main.o
+main : main.o serial.o
 	$(CC) -o main main.o serial.o
 
 main.o : main.cpp
 	$(CC) $(CFLAGS) main.cpp
 
-serial.o : serial.cpp
+serial.o : serial.cpp serial.h
 	$(CC) $(CFLAGS) serial.cpp
 
 clean : 
