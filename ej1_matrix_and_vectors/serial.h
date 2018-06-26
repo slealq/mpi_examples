@@ -1,7 +1,6 @@
-#ifndef __SERIAL_H_
-#define __SERIAL_H_
-
-int serial(int v[], int m[3][3], int r[], int size);
+#ifndef __MAIN_H_
+#define __MAIN_H_
 
 
-#endif // __SERIAL_H_
+
+#endif // __MAIN_H_
