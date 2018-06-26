@@ -9,13 +9,13 @@ CXX = mpic++
 CFLAGS = -c -Wall
 CXXFLAGS = -c -Wall
 
-all: main
+all: serial parallel
 
-main : main.o serial.o parallel.o
-	$(CXX) -o main main.o serial.o parallel.o
+serial : serial.o 
+	$(CC) -o serial.out serial.o 
 
-main.o : main.cpp
-	$(CC) $(CFLAGS) main.cpp
+parallel : parallel.o
+	$(CXX) -o parallel.out parallel.o
 
 serial.o : serial.cpp serial.h
 	$(CC) $(CFLAGS) serial.cpp
@@ -24,7 +24,7 @@ parallel.o : parallel.cpp parallel.h
 	$(CXX) $(CXXFLAGS) parallel.cpp
 
 clean : 
-	rm *.o main
+	rm *.o *.out
 
 
 # end
