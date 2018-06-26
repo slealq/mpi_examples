@@ -1,6 +1,6 @@
-#ifndef __MAIN_H_
-#define __MAIN_H_
+#ifndef __SERIAL_H_
+#define __SERIAL_H_
 
 
 
-#endif // __MAIN_H_
+#endif // __SERIAL_H_
