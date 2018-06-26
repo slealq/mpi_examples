@@ -13,5 +13,5 @@ int serial(int v[], int m[3][3], int r[], int size) {
     }
   }
 
-  return 1; // return true for success
+  return 0; // no faults
 }
