@@ -1,5 +1,6 @@
 #include <iostream>
 #include "main.h"
+#include "serial.h"
 
 int main() {
   // Vector containing some integers
@@ -23,13 +24,8 @@ int main() {
   // vector times matrix, result in r
   int r[3] = {0,0,0};
 
-  // iterate over each column of the matrix
-  for (int i=0; i<3; i++) {
-    // iterate over each pos of vector and matrix
-    for (int j=0; j<3; j++) {
-      r[i] += v[j] * m[j][i];
-    }
-  }
+  // use the serial function
+  serial(v, m, r, 3);
 
   // print the result
   for (int n : r) {
