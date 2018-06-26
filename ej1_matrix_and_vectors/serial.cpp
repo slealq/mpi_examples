@@ -1,5 +1,5 @@
 #include <iostream>
-#include "main.h"
+#include "serial.h"
 
 int main() {
   // Vector containing some integers
