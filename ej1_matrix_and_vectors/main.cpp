@@ -1,8 +1,9 @@
 #include <iostream>
 #include "main.h"
 #include "serial.h"
+#include "parallel.h"
 
-int main() {
+int main(int argc, char *argv[]) {
   // Vector containing some integers
   int v[] = {12, 10, 7};
 
@@ -32,5 +33,9 @@ int main() {
     std::cout << n << "\n";
   }
 
+  // test mpi test function
+  parallel_mpi(argc, argv);
+
+  return 0;
 
 }
