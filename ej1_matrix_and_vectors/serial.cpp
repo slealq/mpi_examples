@@ -1,6 +1,6 @@
 #include "serial.h"
 
-int serial(int* v, int** m, int *r, int size) {
+int serial(int v[], int m[3][3], int r[], int size) {
   /* This function will assume that the matrix and
      vector are the same size, and can be multiplied.
    */
