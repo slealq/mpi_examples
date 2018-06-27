@@ -27,7 +27,7 @@ int main() {
   for (int i=0; i<3; i++) {
     // iterate over each pos of vector and matrix
     for (int j=0; j<3; j++) {
-      r[i] += v[j] * m[j][i];
+      r[i] += v[j] * m[i][j];
     }
   }
 
