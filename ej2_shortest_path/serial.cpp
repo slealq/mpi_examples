@@ -8,7 +8,17 @@ int main() {
   int size = 8;
 
   // search the shortest path beginning from this city
+  // this doesn't really matter, since starting from anywhere
+  // leads to the same best roundtrip
   int start = 0;
+
+  // another example
+  // int size = 4;
+  // int cities[size][size] = { { 0, 10, 15, 20 },
+  //                   { 10, 0, 35, 25 },
+  //                   { 15, 35, 0, 30 },
+  //                   { 20, 25, 30, 0 } };
+
 
   // define the cities weight
   int cities[size][size] = { {0, 115, 8, 17, 167, 26, 83, 75},
@@ -28,18 +38,18 @@ int main() {
 
   // fill the options
   for (int i=0; i<size; i++) {
-    if (n!=start) {
+    if (i!=start) {
       // while n is different from start city
-      options[i] = n;
-    } // if
+      options[n] = i;
 
-    // increment n
-    n++;
+      // increase n
+      n++;
+    } // if
   } // for
 
   // set the minimum path to the max int size
   int min_path = INT_MAX;
-  int min_option;
+  int min_option[size-1];
 
   // define variables for the loop
   int current_city;
@@ -47,14 +57,23 @@ int main() {
 
   // while there is not permutation left
   do {
+    // print paths
+    for (int i=0; i<size-1; i++) {
+      std::cout << options[i];
+    }
+    std::cout << "\n";
+
     // reset current path weight
     current_pathweight=0;
 
     // define the current city as the starting point
-    current_city=0;
+    current_city=start;
 
     // find current path weight
-    for (int i=0; i<size; i++) {
+    for (int i=0; i<size-1; i++) {
+      // print current city
+      std::cout << "current city: " << current_city << "\n";
+
       // use options array to chose next city
       current_pathweight += cities[current_city][options[i]];
 
@@ -62,15 +81,39 @@ int main() {
       current_city = options[i];
     }
 
+    // add the return, from last option to start
+    current_pathweight += cities[current_city][start];
+
+    //min_path = std::min(min_path, current_pathweight);
+
     // update the minimum path
     if (std::min(min_path, current_pathweight) == current_pathweight) {
-      // update minimu path
+      //update minimu path
       min_path = current_pathweight;
-      min_option = options;
 
+      // save the path
+      for (int i=0; i<size-1; i++) {
+        min_option[i] = options[i];
+      }
     }
 
-
   } while (std::next_permutation(options, options+size-1) );
+
+  // print the minum path weight
+  std::cout << "Minimum path weight is: " << min_path << " \n";
+
+  // also print the minimum path
+  std::cout << "The round trip is the following: ";
+
+  std::cout << start;
+  std::cout << ",";
+
+  for(int i=0; i<size-1; i++) {
+    std::cout << min_option[i];
+    std::cout << ",";
+  }
+
+  std::cout << start;
+  std::cout << "\n";
 
 }
