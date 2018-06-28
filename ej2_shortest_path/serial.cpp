@@ -24,7 +24,7 @@ int main() {
   int options[size-1];
 
   // number of city to fill in options
-  int n=0;
+  int n=0; // start with 0
 
   // fill the options
   for (int i=0; i<size; i++) {
@@ -39,13 +39,37 @@ int main() {
 
   // set the minimum path to the max int size
   int min_path = INT_MAX;
+  int min_option;
+
+  // define variables for the loop
+  int current_city;
+  int current_pathweight;
 
   // while there is not permutation left
   do {
+    // reset current path weight
+    current_pathweight=0;
+
+    // define the current city as the starting point
+    current_city=0;
+
+    // find current path weight
     for (int i=0; i<size; i++) {
-      std::cout << options[i];
+      // use options array to chose next city
+      current_pathweight += cities[current_city][options[i]];
+
+      // update current city
+      current_city = options[i];
     }
-    std::cout << "\n";
+
+    // update the minimum path
+    if (std::min(min_path, current_pathweight) == current_pathweight) {
+      // update minimu path
+      min_path = current_pathweight;
+      min_option = options;
+
+    }
+
 
   } while (std::next_permutation(options, options+size-1) );
 
