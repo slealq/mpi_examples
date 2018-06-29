@@ -27,13 +27,19 @@ int main(int argc, char* argv[]){
     MPI_Init(&argc , &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-    int limit = atoi(argv[1]);
-    bool sieveA[limit]; 
+
+    // Initialize with 0
+    int limit = 0;
+    if (argc > 1) {
+      limit = atoi(argv[1]);
+    }
+
+    bool sieveA[limit];
     // Array of ranks to determine who is busy. 1 busy and 0 otherwise
     bool busy_rank[size];
     for (int j = 0; j < size; j++){
         busy_rank[j] = false;
-    }    
+    }
     bool work = true;
     while (work){
         if (rank == 0){
@@ -137,5 +143,7 @@ int main(int argc, char* argv[]){
         std::cout << endl << "Primes: " << cont;
         std::cout << endl << "Execution Time: " << (double)(clock()-startT)/CLOCKS_PER_SEC << "s" << endl;
     }
+
+    MPI_Finalize();
     return 0;
 }
