@@ -11,8 +11,9 @@
 #include <cstdlib>
 
 #define MSG_ARRAY 0
-#define MSG_01 1
-#define MSG_BOOL 2
+#define MSG_00 1
+#define MSG_01 2
+#define MSG_02 3
 
 using namespace std;
 
@@ -21,26 +22,20 @@ using namespace std;
 */
 int main(int argc, char* argv[]){
     int startT = clock();
+    // Initialize with 0
+    int limit = 0;
+    if (argc > 1) {
+        limit = atoi(argv[1]);
+    }
     // Initialize MPI vars
-    int rank, size, x, r, cont;
+    int rank, size, x, r, cont, proc;
+    bool sieveA[limit];
     MPI_Status status;
     MPI_Init(&argc , &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-    // Initialize with 0
-    int limit = 0;
-    if (argc > 1) {
-      limit = atoi(argv[1]);
-    }
-
     bool sieveA[limit];
-    // Array of ranks to determine who is busy. 1 busy and 0 otherwise
-    bool busy_rank[size];
-    for (int j = 0; j < size; j++){
-        busy_rank[j] = false;
-    }
-    bool work = false;
+    bool work = true;
     while (work){
         if (rank == 0){
             // Initialise the sieve array with false values
@@ -49,26 +44,29 @@ int main(int argc, char* argv[]){
             }
             // 2 and 3 are known to be prime
             cont = 2;
+            bool all = false; 
             for (int x = 1; x*x < limit; x++) {
-                //Asigning job to the first avilable rank
-                int k=1;
-                while (busy_rank[k]){
-                    k++;
-                    if (k>size-1){
-                        k=1;
-                    }
+                //Asigning job serial to all ranks
+                for (int k=1;k<size;k++){
+                    MPI_Send(&work,1,MPI_INT,k,MSG_0,MPI_COMM_WORLD);
+                    MPI_Send(sieveA, limit, MPI_INT, k, MSG_ARRAY, MPI_COMM_WORLD);
+                    MPI_Send(&x, 1, MPI_INT, k, MSG_01, MPI_COMM_WORLD);
                 }
-                busy_rank[k]=true;
-                MPI_Send(sieveA, limit, MPI_INT, k, MSG_ARRAY, MPI_COMM_WORLD);
-                MPI_Send(&x, 1, MPI_INT, k, MSG_01, MPI_COMM_WORLD);
-                MPI_Send(busy_rank, size, MPI_INT, k, MSG_BOOL, MPI_COMM_WORLD);
+                //Asigning job when any rank finish
+                MPI_Recv(&proc,1,MPI_INT,MPI_ANY_SOURCE,MSG_02,MPI_COMM_WORLD,&status);
+                MPI_Send(sieveA, limit, MPI_INT, proc, MSG_ARRAY, MPI_COMM_WORLD);
+                MPI_Send(&x, 1, MPI_INT, proc, MSG_01, MPI_COMM_WORLD);
             }
             work = false;
         }
         else {
+            MPI_Recv(&work, size, MPI_INT, 0, MSG_0, MPI_COMM_WORLD,&status);
+            if (work){
+                break;
+            }
             MPI_Recv(sieveA,limit,MPI_INT,0,MSG_ARRAY,MPI_COMM_WORLD,&status);
             MPI_Recv(&x,limit,MPI_INT,0,MSG_01,MPI_COMM_WORLD,&status);
-            MPI_Recv(busy_rank, size, MPI_INT, 0, MSG_BOOL, MPI_COMM_WORLD,&status);
+            
             /* Description of algorithm:
                 Mark sieveA[n] is true if one of the following is true:
                 a) n = (4*x^2)+(y^2) has odd number of solutions, i.e., there exist
@@ -95,9 +93,10 @@ int main(int argc, char* argv[]){
                 }
             }
             busy_rank[rank]=false;
+
         }
     }
-    work = false;
+    work = true;
     while (work){
         if (rank == 0){
             // Determining non-prime all multiples of squares. Starting with 5
@@ -130,20 +129,19 @@ int main(int argc, char* argv[]){
     }
     if (rank==0){
         // Print primes using sieveA[]
+        if (limit > 2)
+            std::cout << 2 << " ";
+        if (limit > 3)
+            std::cout << 3 << " ";
         for (int j = 5; j < limit; j++){
             if (sieveA[j]){
                 std::cout << j << " ";
                 cont++;
             }
         }
-        if (limit > 2)
-            std::cout << 2 << " ";
-        if (limit > 3)
-            std::cout << 3 << " ";
         std::cout << endl << "Primes: " << cont;
         std::cout << endl << "Execution Time: " << (double)(clock()-startT)/CLOCKS_PER_SEC << "s" << endl;
     }
-
     MPI_Finalize();
     return 0;
 }
