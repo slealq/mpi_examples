@@ -16,36 +16,28 @@ int main(int argc, char *argv[]) {
     MPI_Abort(MPI_COMM_WORLD, 1);
   }
 
+  // len of cities graph
+  const int len=8;
+
+  // define the cities weight
+  int cities[len][len] = { {0, 115, 8, 17, 167, 26, 83, 75},
+                           {115, 0, 120, 129, 272, 92, 197, 100},
+                           {8, 120, 0, 9, 160, 34, 78, 83},
+                           {17, 129, 9, 0, 151, 43, 69, 91},
+                           {167, 272, 160, 151, 0, 193, 98, 236},
+                           {26, 92, 34, 43, 193, 0, 108, 55},
+                           {83, 197, 78, 69, 98, 108, 0, 141},
+                           {75, 100, 83, 91, 236, 55, 141, 0} };
+
   if (rank==0) {
     // master rank
-
-    // len of the cities graph
-    int len = 8;
 
     // search the shortest path beginning from this city
     // this doesn't really matter, since starting from anywhere
     // leads to the same best roundtrip
     int start = 0;
 
-    // another example
-    // int len = 4;
-    // int cities[len][len] = { { 0, 10, 15, 20 },
-    //                   { 10, 0, 35, 25 },
-    //                   { 15, 35, 0, 30 },
-    //                   { 20, 25, 30, 0 } };
-
-
-    // define the cities weight
-    int cities[len][len] = { {0, 115, 8, 17, 167, 26, 83, 75},
-                             {115, 0, 120, 129, 272, 92, 197, 100},
-                             {8, 120, 0, 9, 160, 34, 78, 83},
-                             {17, 129, 9, 0, 151, 43, 69, 91},
-                             {167, 272, 160, 151, 0, 193, 98, 236},
-                             {26, 92, 34, 43, 193, 0, 108, 55},
-                             {83, 197, 78, 69, 98, 108, 0, 141},
-                             {75, 100, 83, 91, 236, 55, 141, 0} };
-
-     // options of cities, to permutate
+    // options of cities, to permutate
     int options[len-1];
 
     // number of city to fill in options
@@ -82,6 +74,7 @@ int main(int argc, char *argv[]) {
       if (!all) {
         // continue sending tasks until ranks are out
         MPI_Send(&work, 1, MPI_INT, p, 10, MPI_COMM_WORLD); // tag 10 work bool
+        MPI_Send(&options, len-1, MPI_INT, p, 0, MPI_COMM_WORLD); // tag 0 for options permutation
 
         // send the permutation of options, and let the slave do the calculation
 
@@ -124,6 +117,9 @@ int main(int argc, char *argv[]) {
 
   else { // all slaves
     int work;
+    int *options;
+    int current_pathweight;
+    int current_city;
 
     while (1) {
       // wait for work signal or kill signal
@@ -133,7 +129,21 @@ int main(int argc, char *argv[]) {
         break;
       }
 
+      // allocate memory for the array
+      options = new int[len-1];
+
       // do work
+      MPI_Recv(options, len-1, MPI_INT, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // receive the option
+
+      for (int i=0; i<len-1; i++) {
+        std::cout << options[i];
+      }
+      std::cout << "\n";
+
+      // reset current path weight
+      current_pathweight=0;
+
+      // define the current city as the starting point
 
       // send back result
 
