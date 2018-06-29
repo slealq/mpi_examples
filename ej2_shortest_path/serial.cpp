@@ -57,12 +57,6 @@ int main() {
 
   // while there is not permutation left
   do {
-    // print paths
-    for (int i=0; i<size-1; i++) {
-      std::cout << options[i];
-    }
-    std::cout << "\n";
-
     // reset current path weight
     current_pathweight=0;
 
@@ -71,9 +65,6 @@ int main() {
 
     // find current path weight
     for (int i=0; i<size-1; i++) {
-      // print current city
-      std::cout << "current city: " << current_city << "\n";
-
       // use options array to chose next city
       current_pathweight += cities[current_city][options[i]];
 
@@ -98,6 +89,8 @@ int main() {
     }
 
   } while (std::next_permutation(options, options+size-1) );
+
+  // now finish by printing the result
 
   // print the minum path weight
   std::cout << "Minimum path weight is: " << min_path << " \n";
