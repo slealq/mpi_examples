@@ -81,6 +81,8 @@ int main(int argc, char *argv[]) {
     if (!all) {
       // continue sending tasks until ranks are out
 
+      // send the permutation of options, and let the slave do the calculation
+
       // increment p
       p++;
 
@@ -95,6 +97,8 @@ int main(int argc, char *argv[]) {
     else {
       // all ranks have been used
       // receive rank from any process
+
+      // we have to receive the min path weight, and the min path
 
       // increase received
       received ++;
