@@ -22,27 +22,27 @@ using namespace std;
 int main(int argc, char* argv[]){
     int startT = clock();
     // Initialize MPI vars
-    int rank, size, x, r;
+    int rank, size, x, r, cont;
     MPI_Status status;
     MPI_Init(&argc , &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     int limit = atoi(argv[1]);
+    bool sieveA[limit]; 
     // Array of ranks to determine who is busy. 1 busy and 0 otherwise
     bool busy_rank[size];
     for (int j = 0; j < size; j++){
         busy_rank[j] = false;
-    }
-    // 2 and 3 are known to be prime
-    int cont = 2;
-    // Initialise the sieve array with false values
-    bool sieveA[limit];
-    for (int i = 0; i < limit; i++){
-        sieveA[i] = false;
-    }
+    }    
     bool work = true;
     while (work){
         if (rank == 0){
+            // Initialise the sieve array with false values
+            for (int i = 0; i < limit; i++){
+                sieveA[i] = false;
+            }
+            // 2 and 3 are known to be prime
+            cont = 2;
             for (int x = 1; x*x < limit; x++) {
                 //Asigning job to the first avilable rank
                 int k=1;
