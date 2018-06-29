@@ -33,7 +33,7 @@ run500:
 	./$(OUTPUT) 7368788
 
 clean : 
-	find . -type f -name $(OUTPUT) | xargs rm -rf
+	rm *.o *.out	
 	@echo 'Clean dir succesful...'
 
 $(V).SILENT:
