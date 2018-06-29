@@ -29,7 +29,6 @@ int main(int argc, char* argv[]){
     }
     // Initialize MPI vars
     int rank, size, x, r, cont, proc;
-    bool sieveA[limit];
     MPI_Status status;
     MPI_Init(&argc , &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -46,11 +45,15 @@ int main(int argc, char* argv[]){
             cont = 2;
             bool all = false; 
             for (int x = 1; x*x < limit; x++) {
-                //Asigning job serial to all ranks
-                for (int k=1;k<size;k++){
-                    MPI_Send(&work,1,MPI_INT,k,MSG_0,MPI_COMM_WORLD);
-                    MPI_Send(sieveA, limit, MPI_INT, k, MSG_ARRAY, MPI_COMM_WORLD);
-                    MPI_Send(&x, 1, MPI_INT, k, MSG_01, MPI_COMM_WORLD);
+                if (!all){
+                    //Asigning job serial to all ranks
+                    for (int k=1;k<size;k++){
+                        printf("Estoy en%d,%d\n", k, rank);
+                        MPI_Send(&work,1,MPI_INT,k,MSG_00,MPI_COMM_WORLD);
+                        MPI_Send(sieveA, limit, MPI_INT, k, MSG_ARRAY, MPI_COMM_WORLD);
+                        MPI_Send(&x, 1, MPI_INT, k, MSG_01, MPI_COMM_WORLD);
+                    }
+                    all = true;    
                 }
                 //Asigning job when any rank finish
                 MPI_Recv(&proc,1,MPI_INT,MPI_ANY_SOURCE,MSG_02,MPI_COMM_WORLD,&status);
@@ -60,11 +63,13 @@ int main(int argc, char* argv[]){
             work = false;
         }
         else {
-            MPI_Recv(&work, size, MPI_INT, 0, MSG_0, MPI_COMM_WORLD,&status);
-            if (work){
+            MPI_Recv(&work, size, MPI_INT, 0, MSG_00, MPI_COMM_WORLD,&status);
+            if (!work){
                 break;
             }
+            printf("Estoy trabajando rank %d de %d\n", rank,size);
             MPI_Recv(sieveA,limit,MPI_INT,0,MSG_ARRAY,MPI_COMM_WORLD,&status);
+            printf("Pase el array\n");
             MPI_Recv(&x,limit,MPI_INT,0,MSG_01,MPI_COMM_WORLD,&status);
             
             /* Description of algorithm:
@@ -92,8 +97,7 @@ int main(int argc, char* argv[]){
                     sieveA[n] ^= true;
                 }
             }
-            busy_rank[rank]=false;
-
+            MPI_Send(&proc,1,MPI_INT,0,MSG_02,MPI_COMM_WORLD);
         }
     }
     work = true;
@@ -101,33 +105,32 @@ int main(int argc, char* argv[]){
         if (rank == 0){
             // Determining non-prime all multiples of squares. Starting with 5
             for (int r = 5; r*r < limit; r++) {
-                //Asigning job to the first avilable rank
-                int k=1;
-                while (busy_rank[k]){
-                    k++;
-                    if (k>size-1){
-                        k=1;
-                    }
-                }
-                busy_rank[k]=true;
-                MPI_Send(sieveA, limit, MPI_INT, k, MSG_ARRAY, MPI_COMM_WORLD);
-                MPI_Send(&r, 1, MPI_INT, k, MSG_01, MPI_COMM_WORLD);
-                MPI_Send(busy_rank, size, MPI_INT, k, MSG_BOOL, MPI_COMM_WORLD);
+                //Asigning job when any rank finish
+                MPI_Recv(&proc,1,MPI_INT,MPI_ANY_SOURCE,MSG_02,MPI_COMM_WORLD,&status);
+                MPI_Send(sieveA, limit, MPI_INT, proc, MSG_ARRAY, MPI_COMM_WORLD);
+                MPI_Send(&r, 1, MPI_INT, proc, MSG_01, MPI_COMM_WORLD);
             }
             work = false;
         }
         else {
+            MPI_Recv(&work, size, MPI_INT, 0, MSG_00, MPI_COMM_WORLD,&status);
+            if (work){
+                break;
+            }
             MPI_Recv(sieveA,limit,MPI_INT,0,MSG_ARRAY,MPI_COMM_WORLD,&status);
             MPI_Recv(&r,limit,MPI_INT,0,MSG_01,MPI_COMM_WORLD,&status);
-            MPI_Recv(busy_rank, size, MPI_INT, 0, MSG_BOOL, MPI_COMM_WORLD,&status);
             if (sieveA[r]) {
                 for (int i = r*r; i < limit; i += r*r)
                     sieveA[i] = false;
             }
-            busy_rank[rank]=false;
+            MPI_Send(&proc,1,MPI_INT,0,MSG_02,MPI_COMM_WORLD);   
         }
     }
     if (rank==0){
+        // Kill all processes 
+        for (int i = 1; i < size; ++i){
+            MPI_Send(&work,1,MPI_INT,MPI_ANY_SOURCE,MSG_02,MPI_COMM_WORLD);
+        }
         // Print primes using sieveA[]
         if (limit > 2)
             std::cout << 2 << " ";
