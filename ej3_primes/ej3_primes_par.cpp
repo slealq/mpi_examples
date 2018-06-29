@@ -40,7 +40,7 @@ int main(int argc, char* argv[]){
     for (int j = 0; j < size; j++){
         busy_rank[j] = false;
     }
-    bool work = true;
+    bool work = false;
     while (work){
         if (rank == 0){
             // Initialise the sieve array with false values
@@ -97,7 +97,7 @@ int main(int argc, char* argv[]){
             busy_rank[rank]=false;
         }
     }
-    work = true;
+    work = false;
     while (work){
         if (rank == 0){
             // Determining non-prime all multiples of squares. Starting with 5
