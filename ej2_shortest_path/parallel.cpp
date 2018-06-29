@@ -46,82 +46,92 @@ int main(int argc, char *argv[]) {
                              {75, 100, 83, 91, 236, 55, 141, 0} };
 
      // options of cities, to permutate
-  int options[len-1];
+    int options[len-1];
 
-  // number of city to fill in options
-  int n=0; // start with 0
+    // number of city to fill in options
+    int n=0; // start with 0
 
-  // fill the options
-  for (int i=0; i<len; i++) {
-    if (i!=start) {
-      // while n is different from start city
-      options[n] = i;
+    // fill the options
+    for (int i=0; i<len; i++) {
+      if (i!=start) {
+        // while n is different from start city
+        options[n] = i;
 
-      // increase n
-      n++;
-    } // if
-  } // for
+        // increase n
+        n++;
+      } // if (condition) {
 
-  // set the minimum path to the max int len
-  int min_path = INT_MAX;
-  int min_option[len-1];
+    }//for
 
-  // define variables for the loop
-  int current_city;
-  int current_pathweight;
+    // set the minimum path to the max int len
+    int min_path = INT_MAX;
+    int min_option[len-1];
 
-  // variables for the master
-  int p=1; // rank to send code to
-  bool all=false; // all ranks have been used for the first times
-  int work=1; // work for slaves
-  int received=0; // count how many ranks have sent back their info
+    // define variables for the loop
+    int current_city;
+    int current_pathweight;
 
-  // while there is not permuatation left
-  do {
-    if (!all) {
-      // continue sending tasks until ranks are out
+    // variables for the master
+    int p=1; // rank to send code to
+    bool all=false; // all ranks have been used for the first times
+    int work=1; // work for slaves
+    int received=0; // count how many ranks have sent back their info
 
-      // send the permutation of options, and let the slave do the calculation
+    // while there is not permuatation left
+    do {
+      if (!all) {
+        // continue sending tasks until ranks are out
+        MPI_Send(&work, 1, MPI_INT, p, 10, MPI_COMM_WORLD); // tag 10 work bool
 
-      // increment p
-      p++;
+        // send the permutation of options, and let the slave do the calculation
 
-      // if there are no more ranks left
-      if (p==size) {
-        // raise all flag
-        all = true;
+        // increment p
+        p++;
 
-      } // if p == size
-    } // if not all
+        // if there are no more ranks left
+        if (p==size) {
+          // raise all flag
+          all = true;
+        } // if p == size
+      } // if not all
 
-    else {
-      // all ranks have been used
-      // receive rank from any process
+      else {
+        // all ranks have been used
+        // receive rank from any process
 
-      // we have to receive the min path weight, and the min path
+        // we have to receive the min path weight, and the min path
 
-      // increase received
-      received ++;
+        // increase received
+        break;
+        received ++;
 
-      // since that process is now clean, send another tasks
-    } // else
+        // since that process is now clean, send another tasks
+      } // else
 
+    } while (std::next_permutation(options, options+len-1));
 
-  } while (std::next_permutation(options, options+len-1));
+    // receive the process that are left
 
-  // receive the process that are left
+    // kill all slaves
+    work = 0;
+    for (int i=0; i<size; i++) {
+      MPI_Send(&work, 1, MPI_INT, i, 10, MPI_COMM_WORLD); // send kill
+    }
 
-  // kill all slaves
-
-  // print the result
+    // print the result
 
   } // rank 0 code
 
   else { // all slaves
+    int work;
 
     while (1) {
-
       // wait for work signal or kill signal
+
+      MPI_Recv(&work, 1, MPI_INT, 0, 10, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // receive signal to work
+      if (work==0) {
+        break;
+      }
 
       // do work
 
