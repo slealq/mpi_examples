@@ -32,18 +32,20 @@
 * @param bool* sieveA   (Original sieve)
 */
 void Atkin(int x, int limit, bool* sieveA){
-    for (int y = 1; y*y < limit; y++) {
-        int n = (4*x*x) + (y*y);
-        if (n <= limit && (n % 12 == 1 || n % 12 == 5)){
-            sieveA[n] ^= true;
-        }
-        n = (3*x*x) + (y*y);
-        if (n <= limit && n % 12 == 7){
-            sieveA[n] ^= true;
-        }
-        n = (3*x*x) - (y*y);
-        if (x > y && n <= limit && n % 12 == 11){
-            sieveA[n] ^= true;
+    if (x*x<limit){
+        for (int y = 1; y*y < limit; y++) {
+            int n = (4*x*x) + (y*y);
+            if (n <= limit && (n % 12 == 1 || n % 12 == 5)){
+                sieveA[n] ^= true;
+            }
+            n = (3*x*x) + (y*y);
+            if (n <= limit && n % 12 == 7){
+                sieveA[n] ^= true;
+            }
+            n = (3*x*x) - (y*y);
+            if (x > y && n <= limit && n % 12 == 11){
+                sieveA[n] ^= true;
+            }
         }
     }
 }
@@ -68,7 +70,7 @@ int main(int argc, char **argv){
     if (argc > 1) {
         limit = atoi(argv[1]);
     }
-    int rank, size, proc, cont, work, kills,x,r;
+    int rank, size, proc, cont, work, kills,x,r, send, recv;
     bool subAtkin, subRoots, subPrint, kill; 
     bool sieve[limit], sieveA[limit];
     MPI_Init(&argc , &argv);
@@ -86,36 +88,53 @@ int main(int argc, char **argv){
                 sieve[i] = false;
                 sieveA[i] = false;
             }
+            int assign = 1;
+            send = 0;
+            recv = 0;
             x = 1;
             int all = false;
             while(x*x < limit){
                 work = true;
                 if (!all){
                     //Asign work linear for 1st time
-                    for (int i = 1; i < size; ++i){
-                        MPI_Send(&work, 1, MPI_INT, i, MSG_00, MPI_COMM_WORLD);
-                        MPI_Send(&sieveA, limit, MPI_INT, i, MSG_01, MPI_COMM_WORLD);
-                        MPI_Send(&x,1,MPI_INT,i,MSG_03,MPI_COMM_WORLD);
-                        x++;        
+                    //Asign work linear
+                    MPI_Send(&work, 1, MPI_INT, assign, MSG_00, MPI_COMM_WORLD);
+                    MPI_Send(&sieveA, limit, MPI_INT, assign, MSG_01, MPI_COMM_WORLD);
+                    MPI_Send(&r,1,MPI_INT,assign,MSG_03,MPI_COMM_WORLD);
+                    r++;
+                    assign++;
+                    send++;
+                    if (assign==size){        
+                        all = true;
                     }
-                    all = true;
                 }
                 else{
                     //Asign work as soon as slaves is not busy
                     MPI_Recv(&proc,1,MPI_INT,MPI_ANY_SOURCE,MSG_02,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                     MPI_Recv(&sieveA,limit,MPI_INT,proc,MSG_01,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+                    recv++;
                     for (int i = 0; i < limit; i++){
                         sieve[i] |= sieveA[i];
                     }
-                    printf("rank %d sieve\n", rank);
-                    printAtking(sieve,limit);
+                    // printf("rank %d sieve\n", rank);
+                    // printAtking(sieve,limit);
                     MPI_Send(&work, 1, MPI_INT, proc, MSG_00, MPI_COMM_WORLD);
                     MPI_Send(&sieveA, limit, MPI_INT, proc, MSG_01, MPI_COMM_WORLD);
                     MPI_Send(&x,1,MPI_INT,proc,MSG_03,MPI_COMM_WORLD);
+                    send++;
                     x++;
                 }
             }
             work = false;
+            //waiting for last messages
+            while (recv!=send){
+                MPI_Recv(&proc,1,MPI_INT,MPI_ANY_SOURCE,MSG_02,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+                MPI_Recv(&sieveA,limit,MPI_INT,proc,MSG_01,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+                recv++;
+                for (int i = 0; i < limit; i++){
+                    sieve[i] |= sieveA[i];
+                }
+            }
             //Killing all processors linearly
             for (int j = 1; j < size; ++j){
                 MPI_Send(&work, 1, MPI_INT, j, MSG_00, MPI_COMM_WORLD);     
@@ -130,8 +149,8 @@ int main(int argc, char **argv){
                 MPI_Recv(&sieveA,limit,MPI_INT,0,MSG_01,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                 MPI_Recv(&x,1,MPI_INT,0,MSG_03,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                 Atkin(x,limit,sieveA);
-                printf("rank %d sieve\n", rank);
-                printAtking(sieveA,limit);
+                // printf("rank %d sieve\n", rank);
+                // printAtking(sieveA,limit);
                 proc = rank;
                 MPI_Send(&proc, 1, MPI_INT, 0, MSG_02, MPI_COMM_WORLD);
                 MPI_Send(&sieveA, limit, MPI_INT, 0, MSG_01, MPI_COMM_WORLD);           
@@ -150,23 +169,29 @@ int main(int argc, char **argv){
             r = 5;
             int all = false;
             work = true;
+            send=0;
+            recv=0;
             for (int i = 0; i < limit; i++){
-                sieveA[i] ^= sieve[i];
+                sieveA[i] = sieve[i];
             }
+            int assign = 1;
             while(r*r < limit){
                 if (!all){
                     //Asign work linear
-                    for (int i = 1; i < size; ++i){
-                        MPI_Send(&work, 1, MPI_INT, i, MSG_00, MPI_COMM_WORLD);
-                        MPI_Send(&sieveA, limit, MPI_INT, i, MSG_01, MPI_COMM_WORLD);
-                        MPI_Send(&r,1,MPI_INT,i,MSG_03,MPI_COMM_WORLD);
-                        r++;        
+                    MPI_Send(&work, 1, MPI_INT, assign, MSG_00, MPI_COMM_WORLD);
+                    MPI_Send(&sieveA, limit, MPI_INT, assign, MSG_01, MPI_COMM_WORLD);
+                    MPI_Send(&r,1,MPI_INT,assign,MSG_03,MPI_COMM_WORLD);
+                    r++;
+                    assign++;
+                    send++;
+                    if (assign==size){        
+                        all = true;
                     }
-                    all = true;
                 }
                 else{
                     MPI_Recv(&proc,1,MPI_INT,MPI_ANY_SOURCE,MSG_02,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                     MPI_Recv(&sieveA,limit,MPI_INT,proc,MSG_01,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+                    recv++;
                     for (int i = 0; i < limit; i++){
                         sieve[i] &= sieveA[i];
                     }
@@ -174,9 +199,19 @@ int main(int argc, char **argv){
                     MPI_Send(&sieveA,limit,MPI_INT,proc,MSG_01,MPI_COMM_WORLD);
                     MPI_Send(&r,1,MPI_INT,proc,MSG_03,MPI_COMM_WORLD);
                     r++;
+                    send++;
                 }
             }
             work = false;
+            //waiting for last messages
+            while (recv!=send){
+                MPI_Recv(&proc,1,MPI_INT,MPI_ANY_SOURCE,MSG_02,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+                MPI_Recv(&sieveA,limit,MPI_INT,proc,MSG_01,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+                for (int i = 0; i < limit; i++){
+                    sieve[i] &= sieveA[i];
+                }
+                recv++;
+            }
             //Killing all processors linearly
             for (int j = 1; j < size; ++j){
                 MPI_Send(&work, 1, MPI_INT, j, MSG_00, MPI_COMM_WORLD);     
@@ -190,8 +225,10 @@ int main(int argc, char **argv){
                 MPI_Recv(&sieveA,limit,MPI_INT,0,MSG_01,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                 MPI_Recv(&r,1,MPI_INT,0,MSG_03,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                 // Determining non-prime all multiples of squares. Starting with 5
-                for (int i = r*r; i < limit; i += r*r){
-                    sieveA[i] = false;
+                if (r*r<limit){
+                    for (int i = r*r; i < limit; i += r*r){
+                        sieve[i] = false;
+                    }
                 }
                 proc = rank;
                 MPI_Send(&proc, 1, MPI_INT, 0, MSG_02, MPI_COMM_WORLD);
@@ -210,8 +247,6 @@ int main(int argc, char **argv){
             subPrint = false;
         }
         else{
-            // MPI_Recv(&proc, 1, MPI_INT, MPI_ANY_SOURCE, MSG_02, MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-            // MPI_Recv(&sieveA, limit, MPI_INT, proc, MSG_01, MPI_COMM_WORLD,MPI_STATUS_IGNORE);           
             MPI_Recv(&proc, 1, MPI_INT, MPI_ANY_SOURCE, KILL, MPI_COMM_WORLD,MPI_STATUS_IGNORE);            
             kills++;
         }
