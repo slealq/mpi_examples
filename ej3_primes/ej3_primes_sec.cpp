@@ -91,6 +91,6 @@ int main(int argc, char* argv[]){
 	int limit = atoi(argv[1]);
     int primes = Primes(limit);	
     std::cout << endl << "Primes: " << primes; 
-    std::cout << endl << "Execution Time: " << (double)(clock()-startT)/CLOCKS_PER_SEC << "s" << endl;
+    std::cout << endl << "Execution Time Serial: " << (double)(clock()-startT)/CLOCKS_PER_SEC << "s" << endl;
 	return 0;
 }
