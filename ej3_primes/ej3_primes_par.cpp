@@ -33,10 +33,10 @@
 * @param int limit      (Max value of sieve)
 * @return int newPrimes[3]    (List of newPrimes to add in sieve)
 */
-void Atkin(int x, int y, int limit, int newPrimes[]){
-    newPrimes[0]=0;
-    newPrimes[1]=0;
-    newPrimes[2]=0;
+void Atkin(int x, int y, int limit, int* newPrimes){
+    newPrimes[0] = 0;
+    newPrimes[1] = 0;
+    newPrimes[2] = 0;
     int n = (4*x*x) + (y*y);
     if (n <= limit && (n % 12 == 1 || n % 12 == 5)){
         newPrimes[0] = n;
@@ -72,10 +72,10 @@ int main(int argc, char **argv){
     if (argc > 1) {
         limit = atoi(argv[1]);
     }
-    int rank, size, proc, cont, work, kills, x, y, r, send, recv;
+    int rank, size, proc, cont, work, kills, x, y, send, recv;
     bool subAtkin, subRoots, subKill; 
     bool sieve[limit];
-    int newPrimes[3];
+    int* newPrimes = new int[3];
     MPI_Init(&argc , &argv);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -112,7 +112,7 @@ int main(int argc, char **argv){
                     else{
                         //Asign work as soon as slaves is not busy
                         MPI_Recv(&proc,1,MPI_INT,MPI_ANY_SOURCE,MSG_03,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-                        MPI_Recv(&newPrimes,3,MPI_INT,proc,MSG_04,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
+                        MPI_Recv(newPrimes,3,MPI_INT,proc,MSG_04,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                         recv++;
                         // //Debugging
                         // printf("rank %d sieve\n", rank);
@@ -151,7 +151,7 @@ int main(int argc, char **argv){
                 Atkin(x,y,limit,newPrimes);
                 proc = rank;
                 MPI_Send(&proc, 1, MPI_INT, 0, MSG_03, MPI_COMM_WORLD);
-                MPI_Send(&newPrimes, 3, MPI_INT, 0, MSG_04, MPI_COMM_WORLD);           
+                MPI_Send(newPrimes, 3, MPI_INT, 0, MSG_04, MPI_COMM_WORLD);           
                 work = false;   
             }
             else{
