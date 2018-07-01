@@ -22,6 +22,7 @@ To compile:
 	make
 	
 To run:
+	
 	./serial.out  
 
 	mpiexec -n 4 ./parallel.out
@@ -29,8 +30,10 @@ To run:
 For example 3:
 
 To copile:
-	$make
+	
+	make
 
 To run:
-	$make run
+	
+	make run
 	
