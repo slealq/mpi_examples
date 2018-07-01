@@ -83,7 +83,6 @@ int main(int argc, char **argv){
     subRoots = false;
     subKill = false;
     cont = 2;
-    kills = 0;
     while(subAtkin){
         // Master distribute work
         if (rank==0){
@@ -95,9 +94,17 @@ int main(int argc, char **argv){
             send = 0;
             recv = 0;
             int all = false;
-            for(int x=1; x*x < limit; x++){
-                for (int y = 1; y*y < limit; y++) {
+            x=1;
+            while(x*x < limit){
+                y=1;
+                while (y*y < limit) {
                     work = true;
+                    // Rank0 work
+                    Atkin(x,y,limit,newPrimes);
+                    for (int i = 0; i < 3; i++){
+                        sieve[newPrimes[i]] ^= true;
+                    }
+                    y++;
                     if (!all){
                         //Asign work linear for 1st time
                         MPI_Send(&work, 1, MPI_INT, assign, MSG_00, MPI_COMM_WORLD);
@@ -108,28 +115,24 @@ int main(int argc, char **argv){
                         if (assign==size){        
                             all = true;
                         }
+                        y++;
                     }
                     else{
                         //Asign work as soon as slaves is not busy
                         MPI_Recv(&proc,1,MPI_INT,MPI_ANY_SOURCE,MSG_03,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                         MPI_Recv(newPrimes,3,MPI_INT,proc,MSG_04,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                         recv++;
-                        // //Debugging
-                        // printf("rank %d sieve\n", rank);
-                        // printAtking(sieve,limit);
-                        // printf("rank %d Recv from rank %d sieveA\n", rank, proc);
-                        // printAtking(sieveA,limit);
                         for (int i = 0; i < 3; i++){
                             sieve[newPrimes[i]] ^= true;
                         }               
-                        // printf("rank %d final sieve\n", rank);    
-                        // printAtking(sieve,limit);
                         MPI_Send(&work, 1, MPI_INT, proc, MSG_00, MPI_COMM_WORLD);
                         MPI_Send(&x,1, MPI_INT, proc, MSG_01, MPI_COMM_WORLD);
                         MPI_Send(&y,1,MPI_INT,proc,MSG_02,MPI_COMM_WORLD);
                         send++;
+                        y++;
                     }
                 }
+                x++;
             }
             work = false;
             //Killing all processors linearly
@@ -145,9 +148,6 @@ int main(int argc, char **argv){
             if (work){
                 MPI_Recv(&x,1,MPI_INT,0,MSG_01,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
                 MPI_Recv(&y,1,MPI_INT,0,MSG_02,MPI_COMM_WORLD,MPI_STATUS_IGNORE);
-                //Debug
-                // printf("rank %d NW sieveA\n", rank);
-                // printAtking(sieveA,limit);
                 Atkin(x,y,limit,newPrimes);
                 proc = rank;
                 MPI_Send(&proc, 1, MPI_INT, 0, MSG_03, MPI_COMM_WORLD);
@@ -173,6 +173,7 @@ int main(int argc, char **argv){
     }
     // Determining non-prime all multiples of squares. Starting with 5
     while(subRoots){
+        printf("\nExecution Time: %fs\n",(double)(clock()-startT)/CLOCKS_PER_SEC);
         for (int r = 5; r*r < limit; r++) {
             if (sieve[r]) {
                 for (int i = r*r; i < limit; i += r*r)
